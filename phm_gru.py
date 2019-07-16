@@ -40,20 +40,20 @@ df = pd.DataFrame();
 y = pd.DataFrame();
 #root = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train'
 
-for i in range(1,5):
-    i = 1
-    sensorFilePath = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train\\0{}_M01_DC_train.csv'.format(i)
-    faultsFilePath = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train\\train_faults\\0{}_M01_train_fault_data.csv'.format(i)
-    ttfFilePath = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train\\train_ttf\\0{}_M01_DC_train.csv'.format(i) 
+for i in range(1,2):
+
+    sensorFilePath = './data/train\\0{}_M01_DC_train.csv'.format(i)
+    faultsFilePath = './data/train\\train_faults\\0{}_M01_train_fault_data.csv'.format(i)
+    ttfFilePath = './data/train\\train_ttf\\0{}_M01_DC_train.csv'.format(i)
     df_tmp, y_tmp = loadAndProcessRawData(sensorFilePath, faultsFilePath, ttfFilePath)
 
     df = df.append(df_tmp)
 
     y = [y,y_tmp]
     y = pd.concat(y)
-    sensorFilePath = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train\\0{}_M02_DC_train.csv'.format(i,i)
-    faultsFilePath = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train\\train_faults\\0{}_M02_train_fault_data.csv'.format(i,i)
-    ttfFilePath = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train\\train_ttf\\0{}_M02_DC_train.csv'.format(i,i) 
+    sensorFilePath = './data/train\\0{}_M02_DC_train.csv'.format(i,i)
+    faultsFilePath = './data/train\\train_faults\\0{}_M02_train_fault_data.csv'.format(i,i)
+    ttfFilePath = './data/train\\train_ttf\\0{}_M02_DC_train.csv'.format(i,i)
     df_tmp, y_tmp = loadAndProcessRawData(sensorFilePath, faultsFilePath, ttfFilePath)
 
     df = df.append(df_tmp)
