@@ -38,7 +38,7 @@ def customLoss(y_pred, y_real):
 # Read in Data
 df = pd.DataFrame();
 y = pd.DataFrame();
-#root = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train'
+
 
 for i in range(1,2):
 
@@ -166,7 +166,7 @@ len(activations)
 activations[4].shape
 activations[5].shape
 
-#컬럼간의 상관관계를 보여주는 scatter
+#output layer feature간의 상관관계를 보여주는 scatter
 df.columns.values[:22]
 df.runnum
 
