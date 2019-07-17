@@ -1,4 +1,4 @@
-> 작성중....(7/17)
+> All of Auto-Encoders(+ VAE).md 작성중....(7/17)
 
 # Contents
 
