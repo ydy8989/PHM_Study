@@ -145,11 +145,11 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 >   >
 >   >   - Taylor Expansion : 
 >   >
->   >     ![1563330952584](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563330952584.png)
+>   >     ![figure1](https://github.com/ydy8989/PHM_Study/tree/master/Auto_Encoder/pic/figure1.png)
 >   >
 >   >   - Approximation : 테일러 expansion처럼 다 확장시키는게 아니라 1차 미분계수만 구해서 계산하는 방식.
 >   >
->   >     ![1563331224777](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563331224777.png)
+>   >     ![figure2](https://github.com/ydy8989/PHM_Study/tree/master/Auto_Encoder/pic/figure2.png)
 >   >
 >   >     Learning rate를 사용하여 조금씩 파라미터 값을 바꾸는 것은 로스 함수의 1차 미분항까지만 사용했기 때문에, 아주 좁은 영역(sample data의 인접 지역)에서만 감소 방향이 정확하기 때문임...
 >   >
