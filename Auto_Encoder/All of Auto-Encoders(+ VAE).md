@@ -103,10 +103,9 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 >   $$
 >   Loss = L(f_\theta(x),y) = \sum_i L(f_\theta(x_i),y_i)
 >   $$
->
 > - 지금까지의 딥러닝 과정에서는 Loss function을 마음대로 사용할 수 없음. 왜??
 >
->   **Why?** Back propagation 때문임. 역전파 과정이 진행되어야 loss 값을 구할 수 있기 때문임.
+> **Why?** Back propagation 때문임. 역전파 과정이 진행되어야 loss 값을 구할 수 있기 때문임.
 >
 >   - 역전파 알고리즘은 수식 4개로 진행되는데, 이를 진행하기 위한 **2가지 가정**이 있음
 >
