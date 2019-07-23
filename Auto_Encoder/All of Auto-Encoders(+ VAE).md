@@ -1,8 +1,8 @@
 # All of Auto-Encoders(+ VAE)
 
-**A way for Unsupervised Learning of Nonlinear Manifold**
+**A way for Unsupervised Learning of Nonlinear Manifold**ㅇㅇㅇㅇ
 
----
+------
 
 **오토인코더 :** 입력과 출력의 형태가 동일하게 만드는 네트워크 구조를 일컫는다고 생각할 수 있음.
 
@@ -13,7 +13,7 @@
 3. Generative model learning
 4. ML density estimation
 
----
+------
 
 **오토인코더 학습할 때 :**
 
@@ -21,7 +21,7 @@
 
 Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likelihood function **keyword 4**
 
----
+------
 
 **학습된 오토인코더에서:**
 
@@ -29,16 +29,16 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 
 디코더는 생성 모델의 역할을 수행한다. **keyword 3**
 
----
+------
 
----
+------
 
 ## Contents
 
 1. Revisit Deep Neural Networks
    1. Machine learning problem
-   2. Loss function viewpoint I : Back-propagation
-   3. Loss function viewpoint II : Maximum likelihood
+   2. Loss function (viewpoint I : Back-propagation)
+   3. Loss function (viewpoint II : Maximum likelihood)
    4. Maximum likelihood for auto-encoders
 2. Manifold Learning
    1. Four objectives
@@ -58,7 +58,7 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
    3. Regression
    4. GAN + VAE
 
----
+------
 
 # 1. Revisit Deep Neural Networks
 
@@ -87,7 +87,7 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 
    - Compute optimal function output
 
----
+------
 
 **Collect training data**
 
@@ -103,9 +103,10 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 >   $$
 >   Loss = L(f_\theta(x),y) = \sum_i L(f_\theta(x_i),y_i)
 >   $$
+>
 > - 지금까지의 딥러닝 과정에서는 Loss function을 마음대로 사용할 수 없음. 왜??
 >
-> **Why?** Back propagation 때문임. 역전파 과정이 진행되어야 loss 값을 구할 수 있기 때문임.
+>   **Why?** Back propagation 때문임. 역전파 과정이 진행되어야 loss 값을 구할 수 있기 때문임.
 >
 >   - 역전파 알고리즘은 수식 4개로 진행되는데, 이를 진행하기 위한 **2가지 가정**이 있음
 >
@@ -115,7 +116,7 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 >
 >   - 이 두가지 가정이 안되면, Back propagation이 불가능
 
----
+------
 
 **Learning/Training**
 
@@ -144,11 +145,11 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 >   >
 >   >   - Taylor Expansion : 
 >   >
->   >     ![](https://github.com/ydy8989/PHM_Study/blob/master/Auto_Encoder/pic/figure1.png)
+>   >     ![1563330952584](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563330952584.png)
 >   >
 >   >   - Approximation : 테일러 expansion처럼 다 확장시키는게 아니라 1차 미분계수만 구해서 계산하는 방식.
 >   >
->   >     ![](https://github.com/ydy8989/PHM_Study/blob/master/Auto_Encoder/pic/figure2.png)
+>   >     ![1563331224777](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563331224777.png)
 >   >
 >   >     Learning rate를 사용하여 조금씩 파라미터 값을 바꾸는 것은 로스 함수의 1차 미분항까지만 사용했기 때문에, 아주 좁은 영역(sample data의 인접 지역)에서만 감소 방향이 정확하기 때문임...
 >   >
@@ -160,23 +161,47 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 >   >
 >   > - 원래는 모든 데이터에 대한 로스 미분값의 합을 구한 후 파라미터를 갱신해야 하지만, 배치 크기만큼만 로스 미분값의 합을 구한 후 파라미터를 갱신한다. (stochastic 경사하강) =>> 전체와 배치의 경사하강이 같을 거라는 기대
 
----
+------
 
----
+------
 
-## 1.2 Loss function viewpoint I : Back-propagation
+## 1.2 Loss function (*viewpoint I : Back-propagation*)
 
 - **2가지 관점**
   1. 딥러닝 학습 시 **Back-propagation**이 잘 동작하는 관점 : **Cross Entropy**
   2. 네트워크 출력값이 **Continuous value**면 **Mean Square Error** and **Discrete**하면 **Cross Entropy**
 
-****
+> 이 두개를 쓰는 이유는 backpropagation을 사용하기 위한 가정 2가지가 충족되는 방식이기 때문에.
 
-### Type 1 : Mean Square Error / Quadratic loss
+![1563866156888](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563866156888.png)
+
+###  Type 1 : Mean Square Error / Quadratic loss
+
+![1563866201260](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563866201260.png)
+
+- 두 가지 케이스를 랜덤하게 초기값으로 잡고 그린 결과, 초기값에 따른 변화가 다름;
+
+![1563866367891](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563866367891.png)
+
+- 보이는 것 처럼, weight와 bias 둘다 backpropagation 단계에서 미분값이 포함되어있음(시그마프라임(z))
+- **초록박스**: 미분값이 있는애랑, 거의 없는애랑의 차이..
 
 
 
-### Type 2 : 
+### Type 2 : Cross Entropy
+
+- MSE와는 달리 CE는 출력 레이어에서의 에러값에 activation function의 미분값이 곱해지지 않아, gradient vanishing problem 문제가 발생하지 않는다(학습이 빨리된다 - 여기서 학습이 빨리된다는거는, 학습 완료로 만족할만한 수준까지 도달하는데 걸리는 시간이 짧다는 것임)
+- 그러나 ***레이어가 여러개가 사용될 경우***에는 결국 activation function의 미분값이 계속해서 곱해지므로 gradient vanishing problem에서 완전히 자유로울 수는 없다. 
+  - 이러한 관점에서 relu는 미분계수가 1 혹은 0이기 때문에, 레이어가 추가되어도, 학습이 초반부터 빠르게 진행가능함
+
+- ***MSE(초록)와 CE(검정)의 차이*** : MSE는 처음부터, activation function의 도함수가 포함되어있다. 
+
+![1563867933936](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563867933936.png)
+
+​	![1563868525864](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563868525864.png)
+
+
 
 ## 1.3 Loss function viewpoint II : Maximum likelihood
 
+> 네트워크의 출력값에 대한 해석이 매우 중요함
