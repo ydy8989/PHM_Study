@@ -135,7 +135,7 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 >   >
 >   > - answer 2 : 움직여도 로스값이 변함없을 경우에 멈춤
 >   >
->   >   ------
+>   > ------
 >   >
 >   > - 이런 식으로 theta를 바꾸긴 바꿔야하는데... Dimension 클수록 이런 문제가 더더더 발생
 >   >
@@ -143,23 +143,20 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 >   >
 >   > - answer 3 :
 >   >
->   >   - Taylor Expansion : 
->   >
->   >     ![figure1](https://user-images.githubusercontent.com/38639633/61756223-f9242880-adf5-11e9-91a8-c490a9643dcf.png)
-
->   >
+>   >   - Taylor Expansion :  ![figure1](https://user-images.githubusercontent.com/38639633/61756223-f9242880-adf5-11e9-91a8-c490a9643dcf.png)
+>   >   
 >   >   - Approximation : 테일러 expansion처럼 다 확장시키는게 아니라 1차 미분계수만 구해서 계산하는 방식.
->   >
+>   >   
 >   >     ![figure2](https://user-images.githubusercontent.com/38639633/61756261-2244b900-adf6-11e9-898a-1211ed024431.png)
-            Learning rate를 사용하여 조금씩 파라미터 값을 바꾸는 것은 로스 함수의 1차 미분항까지만 사용했기 때문에, 아주 좁은 영역(sample data의 인접 지역)에서만 감소 방향이 정확하기 때문임...
+>   >   
+>   >     Learning rate를 사용하여 조금씩 파라미터 값을 바꾸는 것은 로스 함수의 1차 미분항까지만 사용했기 때문에, 아주 좁은 영역(sample data의 인접 지역)에서만 감소 방향이 정확하기 때문임...
 >   >
->   >   ------
->   >
->   > - 전체 데이터에 대한 로스 함수가 각 데이터 샘플에 대한 로스의 합으로 구성되어 있기에 미분 계산을 효율적으로 할 수 있다. 
->   >
->   > - 만약 곱으로 구성되어 있으면, 미분을 위해 모든 샘플의 결과를 메모리에 저장하여야 한다.
->   >
->   > - 원래는 모든 데이터에 대한 로스 미분값의 합을 구한 후 파라미터를 갱신해야 하지만, 배치 크기만큼만 로스 미분값의 합을 구한 후 파라미터를 갱신한다. (stochastic 경사하강) =>> 전체와 배치의 경사하강이 같을 거라는 기대
+>   
+> - 전체 데이터에 대한 로스 함수가 각 데이터 샘플에 대한 로스의 합으로 구성되어 있기에 미분 계산을 효율적으로 할 수 있다. 
+>
+> - 만약 곱으로 구성되어 있으면, 미분을 위해 모든 샘플의 결과를 메모리에 저장하여야 한다.
+>
+> - 원래는 모든 데이터에 대한 로스 미분값의 합을 구한 후 파라미터를 갱신해야 하지만, 배치 크기만큼만 로스 미분값의 합을 구한 후 파라미터를 갱신한다. (stochastic 경사하강) =>> 전체와 배치의 경사하강이 같을 거라는 기대
 
 ------
 
@@ -206,3 +203,4 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 ## 1.3 Loss function viewpoint II : Maximum likelihood
 
 > 네트워크의 출력값에 대한 해석이 매우 중요함
+
