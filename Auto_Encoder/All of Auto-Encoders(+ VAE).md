@@ -145,13 +145,13 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 >   >
 >   >   - Taylor Expansion : 
 >   >
->   >     ![1563330952584](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563330952584.png)
+>   >     ![figure1](https://user-images.githubusercontent.com/38639633/61756223-f9242880-adf5-11e9-91a8-c490a9643dcf.png)
+
 >   >
 >   >   - Approximation : 테일러 expansion처럼 다 확장시키는게 아니라 1차 미분계수만 구해서 계산하는 방식.
 >   >
->   >     ![1563331224777](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563331224777.png)
->   >
->   >     Learning rate를 사용하여 조금씩 파라미터 값을 바꾸는 것은 로스 함수의 1차 미분항까지만 사용했기 때문에, 아주 좁은 영역(sample data의 인접 지역)에서만 감소 방향이 정확하기 때문임...
+>   >     ![figure2](https://user-images.githubusercontent.com/38639633/61756261-2244b900-adf6-11e9-898a-1211ed024431.png)
+            Learning rate를 사용하여 조금씩 파라미터 값을 바꾸는 것은 로스 함수의 1차 미분항까지만 사용했기 때문에, 아주 좁은 영역(sample data의 인접 지역)에서만 감소 방향이 정확하기 때문임...
 >   >
 >   >   ------
 >   >
@@ -173,15 +173,16 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 
 > 이 두개를 쓰는 이유는 backpropagation을 사용하기 위한 가정 2가지가 충족되는 방식이기 때문에.
 
-![1563866156888](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563866156888.png)
+![1563866156888](https://user-images.githubusercontent.com/38639633/61756334-6fc12600-adf6-11e9-99d8-a72ffc61d4a7.png)
 
 ###  Type 1 : Mean Square Error / Quadratic loss
 
-![1563866201260](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563866201260.png)
+![1563866201260](https://user-images.githubusercontent.com/38639633/61756345-7fd90580-adf6-11e9-995a-4f075bf72064.png)
+
 
 - 두 가지 케이스를 랜덤하게 초기값으로 잡고 그린 결과, 초기값에 따른 변화가 다름;
 
-![1563866367891](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563866367891.png)
+![1563866367891](https://user-images.githubusercontent.com/38639633/61756357-8a939a80-adf6-11e9-8596-c289e4c38efc.png)
 
 - 보이는 것 처럼, weight와 bias 둘다 backpropagation 단계에서 미분값이 포함되어있음(시그마프라임(z))
 - **초록박스**: 미분값이 있는애랑, 거의 없는애랑의 차이..
@@ -196,9 +197,9 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 
 - ***MSE(초록)와 CE(검정)의 차이*** : MSE는 처음부터, activation function의 도함수가 포함되어있다. 
 
-![1563867933936](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563867933936.png)
+![1563867933936](https://user-images.githubusercontent.com/38639633/61756368-92533f00-adf6-11e9-894b-92854f9e703f.png)
 
-​	![1563868525864](C:\Users\hbee\AppData\Roaming\Typora\typora-user-images\1563868525864.png)
+​	![1563868525864](https://user-images.githubusercontent.com/38639633/61756369-92533f00-adf6-11e9-90c1-f3667b15a497.png)
 
 
 
