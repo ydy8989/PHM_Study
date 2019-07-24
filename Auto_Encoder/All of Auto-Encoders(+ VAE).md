@@ -140,7 +140,7 @@ Loss는 negative maximal likelihood로 해석 = loss minimize : maximal likeliho
 >   > - 이런 식으로 theta를 바꾸긴 바꿔야하는데... Dimension 클수록 이런 문제가 더더더 발생
 >   >
 >   >   > 3. 어떻게 theta를 바꿔야 loss가 줄어들어?
->   >
+>   > 
 >   > - answer 3 :
 >   >
 >   >   - Taylor Expansion :  ![figure1](https://user-images.githubusercontent.com/38639633/61756223-f9242880-adf5-11e9-91a8-c490a9643dcf.png)
