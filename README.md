@@ -17,5 +17,6 @@ PHM_data
 
 - LSTM
 - GRU
-- ~~Auto-Encoder (Anomaly detection)~~ (Not Yet)
+- Auto-Encoder (Anomaly detection)
+- 
 
