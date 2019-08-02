@@ -89,7 +89,6 @@ len(dataset)
 
 #%%
 #aaa.loc[(4164,44),:].set_index('time').ix[:,2:].plot(figsize = (12,8))
-aaa = aa.set_index(['Lot'])
 for num, grp_lot in aa.groupby('Lot'):
     for num2, grp_stg in grp_lot.groupby('stage'):
         print(grp_stg.iloc[0][['Lot','stage']])
@@ -101,7 +100,7 @@ for num, grp_lot in aa.groupby('Lot'):
 for (a,b) in zip(lotlst, stglst):
     print('lot :',a,'stage',b)
     test_time = aa[aa.Lot==a].time.index
-    aa.loc[test_time].ix[:,6:].plot(figsize = (12,8))
+    aa.loc[test_time].ix[:,7:].plot(figsize = (12,8))
     plt.show()
     #
 #    bb.loc[test_time].ix[:,1:].plot()
@@ -109,12 +108,19 @@ for (a,b) in zip(lotlst, stglst):
 aa.ix[473500:473800,6:].plot(figsize = (13,10))
 
 aa[(450000<aa.time) & (aa.time<500000)]
-
+cc
 def split_norm_df(aaa):
     #이상치 제거한다.
         #분산으로 제거하면 좋음.
     #쪼갠다
-          
+    aa = aa.fillna(method='ffill')
+    aa.ix[:,7:] = normalize(aa.ix[:,7:], axis=1)
+    for num, grp_lot in aa.groupby('Lot'):
+        for num2, grp_stg in grp_lot.groupby('stage'):
+            
+            grp_stg.set_index('time').ix[:,6:].plot(figsize = (12,8))
+            plt.show()
+grp_stg.tail()
     #정규화 때린다
     #다시 붙인다 'time'순으로
     #붙인걸 리턴한다.
