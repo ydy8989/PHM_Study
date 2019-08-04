@@ -41,12 +41,26 @@ def cutoff(sensor_data, faults_data, ttf_data, column):
 
 aa1, bb1, cc1 = cutoff(aa, cc, bb, 'FlowCool Pressure Dropped Below Limit')
 
+
 # %%
 # Fixtureshutterposition ONE-HOT-ENCODING
 # def fixtureshutter_outlier(aa):
 #    aa.FIXTURESHUTTERPOSITIONixtureshutterposition
 #    return result
 
+# %%
+# aa.ix[:,7:].plot(subplots = True, grid = True, figsize = (12,34))
+
+def std_based_outlier(df):
+    for i in range(7, len(df.iloc[1])):
+        df.iloc[:, i] = df.iloc[:, i].replace(0, np.NaN)  # null
+        df = df[~(np.abs(df.iloc[:, i] - df.iloc[:, i].mean()) > (3 * df.iloc[:, i].std()))].fillna(0)
+        print('{}th-colum processing.......'.format(i))
+    return df
+
+
+outlier_aa = std_based_outlier(aa)
+outlier_aa.plot(subplots=True, grid=True, figsize=(12, 34))
 # %%
 '''
 module : lot, stage parsing
@@ -74,22 +88,27 @@ print('length of lotlst:', len(lotlst))
 print('length of stglst:', len(stglst))
 
 # %%
-# outliers=[]
-# dataset= [10,12,12,13,12,11,14,13,15,10,10,10,100,12,14,13, 12,10, 10,11,12,15,12,13,12,11,14,13,15,10,15,12,10,14,13,15,10]
-# dataset = aa.FIXTURESHUTTERPOSITION
-# def mad_based_outlier(points, thresh=2):
-##    if len(points.shape) == 1:
-##        points = points[:,None]
-#    median = np.median(points, axis=0)
-#    diff = np.sum((points - median)**2)
-#    diff = np.sqrt(diff)
-#    med_abs_deviation = np.median(diff)
-#    modified_z_score = 0.6745 * diff / med_abs_deviation
-#    return modified_z_score > thresh
-# len(a = mad_based_outlier(dataset))
-# len(dataset[a])
-# dataset[a].value_counts()
-# len(dataset)
+outliers = []
+dataset = [10, 12, 12, 13, 12, 11, 14, 13, 15, 10, 10, 10, 100, 12, 14, 13, 12, 10, 10, 11, 12, 15, 12, 13, 12, 11, 14,
+           13, 15, 10, 15, 12, 10, 14, 13, 15, 10]
+dataset = aa.FIXTURESHUTTERPOSITION
+
+
+def mad_based_outlier(points, thresh=2):
+    #    if len(points.shape) == 1:
+    #        points = points[:,None]
+    median = np.median(points, axis=0)
+    diff = np.sum((points - median) ** 2)
+    diff = np.sqrt(diff)
+    med_abs_deviation = np.median(diff)
+    modified_z_score = 0.6745 * diff / med_abs_deviation
+    return modified_z_score > thresh
+
+
+len(a=mad_based_outlier(dataset))
+len(dataset[a])
+dataset[a].value_counts()
+len(dataset)
 
 # %%
 # aaa.loc[(4164,44),:].set_index('time').ix[:,2:].plot(figsize = (12,8))
@@ -125,7 +144,7 @@ def split_norm_df(aa):
     # 이상치 제거한다.
     # 분산으로 제거하면 좋음.
     # pass
-
+    # this process is inevitable proess...
     # 쪼갠다
     aa = aa.fillna(method='ffill')
     #    aa_copy = aa.copy()
@@ -162,7 +181,8 @@ def split_norm_df(aa):
     return result
 
 
-new_aa = split_norm_df(aa)
+new_aa = split_norm_df(outlier_aa)
+
 # %%
 result.ix[:, 7:].plot(figsize=(12, 34), subplots=True, grid=True)
 aa.ix[:, -4:].plot(figsize=(12, 8), subplots=True, grid=True)
