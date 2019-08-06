@@ -19,6 +19,7 @@ c = 'train_faults/0{}_M0{}_train_fault_data.csv'.format(i1,i2)
 aa = pd.read_csv(a)
 bb = pd.read_csv(b)
 cc = pd.read_csv(c)
+
 def cutoff(sensor_data, faults_data, ttf_data, column):
     # cut off the tail of the data set that with NaN ttf
     temp = faults_data[faults_data['fault_name'] == column]
@@ -38,6 +39,10 @@ def cutoff(sensor_data, faults_data, ttf_data, column):
 
 
 aa1, bb1, cc1 = cutoff(aa, cc, bb, 'FlowCool Pressure Dropped Below Limit')
+bb1 = bb1['TTF_'+'FlowCool Pressure Dropped Below Limit']
+#summation of sensor_data and TTF_data
+sum_df = pd.concat([aa1, bb1],axis = 1)
+sum_df.rename(columns={'TTF_'+'FlowCool Pressure Dropped Below Limit':"Label"}, inplace = True)
 
 #%%
 #Fixtureshutterposition ONE-HOT-ENCODING
@@ -46,25 +51,28 @@ aa1, bb1, cc1 = cutoff(aa, cc, bb, 'FlowCool Pressure Dropped Below Limit')
 #    return result
 
 #%%
-#aa.ix[:,7:].plot(subplots = True, grid = True, figsize = (12,34))
-
 def std_based_outlier(df):
-    for i in range(7, len(df.iloc[1])): 
+    for i in range(7, len(df.iloc[1])-1):#컬럼갯수만큼 for문 돌기. 
         df.iloc[:,i] = df.iloc[:,i].replace(0, np.NaN) #null
-        df = df[~(np.abs(df.iloc[:,i] - df.iloc[:,i].mean()) > (3*df.iloc[:,i].std()))].fillna(0)
+        df = df[~(np.abs(df.iloc[:,i] - df.iloc[:,i].mean()) > (2.4*df.iloc[:,i].std()))].fillna(0)
         print('{}th-colum processing.......'.format(i))       
     return df
-outlier_aa = std_based_outlier(aa1)
-#outlier_aa.ix[321800:321900,-4:-1].plot(figsize = (12,6), subplots = True)
-#outlier_aa.plot(subplots = True, grid = True, figsize = (12,34))
-
-
+outlier_aa = std_based_outlier(sum_df)
+## =============================================================================
+## #plotting
+## =============================================================================
+#outlier_aa.Label.plot(grid = True, figsize = (12,3))
+#outlier_aa.Label.shape
+#outlier_aa.info()
+#outlier_aa.head()
+#outlier_aa[outlier_aa.columns[-1]].info()
 
 #%%
 '''
-module : lot, stage parsing
+# =============================================================================
+# module : lot, stage parsing
+# =============================================================================
 '''
-
 lotlst = []
 stglst = []
 for idx, i in enumerate(cc1.time):
@@ -85,6 +93,8 @@ for idx, i in enumerate(cc1.time):
 
 print('length of lotlst:',len(lotlst))
 print('length of stglst:',len(stglst))
+
+
 #%%
 ##%%
 #outliers=[]
@@ -107,20 +117,21 @@ print('length of stglst:',len(stglst))
 #%%
 #aaa.loc[(4164,44),:].set_index('time').ix[:,2:].plot(figsize = (12,8))
 #every lots and stages's 
-for num, grp_lot in aa.groupby('Lot'):
-    for num2, grp_stg in grp_lot.groupby('stage'):
-        print(grp_stg.iloc[0][['Lot','stage']])
-        grp_stg.set_index('time').ix[:,6:].plot(figsize = (12,8))
-        plt.show()
+#
+#for num, grp_lot in aa.groupby('Lot'):
+#    for num2, grp_stg in grp_lot.groupby('stage'):
+#        print(grp_stg.iloc[0][['Lot','stage']])
+#        grp_stg.set_index('time').ix[:,6:].plot(figsize = (12,8))
+#        plt.show()
 #        print(grp_stg) # 하나하나가 미니df
-
-#%%
-#에러를 보유했던 랏과 스테이지 plot
-for (a,b) in zip(lotlst, stglst):
-    print('lot :',a,'stage',b)
-    test_time = aa[aa.Lot==a].time.index
-    aa.loc[test_time].ix[:,7:].plot(figsize = (12,8))
-    plt.show()
+#
+##%%
+##에러를 보유했던 랏과 스테이지 plot
+#for (a,b) in zip(lotlst, stglst):
+#    print('lot :',a,'stage',b)
+#    test_time = aa[aa.Lot==a].time.index
+#    aa.loc[test_time].ix[:,7:].plot(figsize = (12,8))
+#    plt.show()
     
 #    bb.loc[test_time].ix[:,1:].plot()
    #%% 
@@ -129,19 +140,21 @@ for (a,b) in zip(lotlst, stglst):
 #aa[(450000<aa.time) & (aa.time<500000)]
 #cc
 #grp_stg[sen_col]
-obj_col = ['time',  'Lot', 'runnum', 'recipe', 'recipe_step']
-sen_col = list(aa.columns[7:]).append('runnum')
-def split_norm_df(aa):
+obj_col = ['time',  'Lot', 'runnum', 'recipe', 'recipe_step','Label']
+#Only sensor columns..(except Label col.)
+sen_col = list(outlier_aa.columns[7:-1]) 
+
+def split_norm_df(outlier_aa):
     #이상치 제거한다.
         #분산으로 제거하면 좋음.
         #pass
         #this process is inevitable proess...        
     #쪼갠다
-    aa = aa.fillna(method='ffill')
+    outlier_aa = outlier_aa.fillna(method='ffill')
 #    aa_copy = aa.copy()
 #    aa_copy[sen_col]=0
     df = pd.DataFrame()
-    for num, grp_lot in aa.groupby('Lot'): 
+    for num, grp_lot in outlier_aa.groupby('Lot'): 
         for num2, grp_stg in grp_lot.groupby('stage'):
             test_index = grp_stg.index
             norm_arr = normalize(grp_stg[sen_col], axis=0)
@@ -152,7 +165,7 @@ def split_norm_df(aa):
             print('=====================================')
             print('lot num :',grp_stg.iloc[0]['Lot'],'stage num :',grp_stg.iloc[0]['stage'])
             print('=====================================')
-    org_df = aa.drop(['Tool','stage'], axis = 1)[obj_col]
+    org_df = outlier_aa.drop(['Tool','stage'], axis = 1)[obj_col]
     result = pd.concat([org_df,df],axis = 1)
 #    
 #            #axis =0 and 1 comparison
@@ -172,7 +185,8 @@ def split_norm_df(aa):
     return result
 
 # 저장 파일 있으면, 불러오고 없으면 만들기
-norm_save_file = False
+
+norm_save_file = True
 
 if norm_save_file:    
     print('Save file loading.......')
@@ -182,9 +196,14 @@ else:
     print('There is no save file!')
     print('Dataframe normalizeing Start!!.....')
     new_aa = split_norm_df(outlier_aa)
+    new_aa = pd.concat([new_aa,outlier_aa.Label], axis = 1)
     new_aa.to_csv("norm_sensor_data2.csv", mode='w')
 
+#
 new_aa.head()
+
+
+
 # =============================================================================
 # #플로팅 
 # new_aa.info()
@@ -216,9 +235,8 @@ new_aa.head()
 #grp.tail()
 
 # 현재상태 : stage 컬럼은 삭제되었고, lot별로 남은 rul만 매칭 시키면 됨.
+#%%
 
-bb1 = bb1[['time','TTF_FlowCool Pressure Dropped Below Limit']]
-bb1
 
 #%%
 def weibull_loglik_discrete(y_true, ab_pred, name=None):
@@ -328,27 +346,28 @@ new_aaM.shape
 sampleRate = 5 
 TimeStepSize = 1 # every 600 second
 n_skipSample = 3 # skip a lot of samples
-
-a= '0{}_M0{}_DC_train.csv'.format(i1,i2)
-b= 'train_ttf/0{}_M0{}_DC_train.csv'.format(i1,i2)
-c = 'train_faults/0{}_M0{}_train_fault_data.csv'.format(i1,i2)
-
-aa = pd.read_csv(a)
-bb = pd.read_csv(b)
-cc = pd.read_csv(c)
+#
+#a= '0{}_M0{}_DC_train.csv'.format(i1,i2)
+#b= 'train_ttf/0{}_M0{}_DC_train.csv'.format(i1,i2)
+#c = 'train_faults/0{}_M0{}_train_fault_data.csv'.format(i1,i2)
+#
+#aa = pd.read_csv(a)
+#bb = pd.read_csv(b)
+#cc = pd.read_csv(c)
 
 #노필요 컬럼 드랍시킴
-aa = aa.drop(['Tool'], axis = 1)
+#aa = aa.drop(['Tool'], axis = 1)
 #aa = aa.drop(['Lot'], axis = 1)
 #그냥 인덱스 재설정? 정도가되겠다
-aa.index = range(0,len(aa))
-bb.index = range(0,len(bb))
+#aa.index = range(0,len(aa))
+#bb.index = range(0,len(bb))
 
 #그냥 앞으로 당긴거, fault time 기준으로.
-aa1, bb1, cc1 = cutoff(aa, cc, \
-                    bb, 'FlowCool Pressure Dropped Below Limit')    
+#aa1, bb1, cc1 = cutoff(aa, cc, \
+#                    bb, 'FlowCool Pressure Dropped Below Limit')    
 
-aa1 = aa1.fillna(method = 'ffill')
+#aa1 = aa1.fillna(method = 'ffill')
+new_aa.info()
 aa1['recipe'] = aa1['recipe'] + 200
 label = bb1['TTF_FlowCool Pressure Dropped Below Limit']
 #label.plot()
@@ -584,6 +603,7 @@ model.add(Activation(activate))
 # Use the discrete log-likelihood for Weibull survival data as our loss function
 model.compile(loss=weibull_loglik_discrete, optimizer=RMSprop(lr=.001))
 
+model.summary()
 # Fit!
 model.fit(train_x, train_y, nb_epoch=50, batch_size=2000, verbose=2, validation_data=(test_x, test_y))
 
