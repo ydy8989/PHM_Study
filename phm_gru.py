@@ -20,7 +20,10 @@ from keras.layers import LSTM, GRU
 import keras.callbacks
 from keras import backend as K
 from keras.models import Model
+from keras.layers import Activation
+from keras.layers import Masking
 
+from keras.optimizers import RMSprop
 from LoadAndProcessCSVFile_Classification import TimeStepSize
 from LoadAndProcessCSVFile_Classification import loadAndProcessRawData
 
@@ -33,6 +36,26 @@ def Error(y_pred, y_real):
 
 def customLoss(y_pred, y_real):
     return K.sum(K.exp(-0.001 * y_real) * K.abs(y_real - y_pred))
+def  activate ( ab ) :
+    a = K.exp (ab [:, 0 ])
+    b = K.softplus (ab [:, 1 ])
+
+    a = K.reshape (a, (K.shape (a) [ 0 ], 1 ))
+    b = K.reshape (b, (K.shape (b) [ 0 ], 1 ))
+
+    return K.concatenate ((a, b), axis = 1 )
+
+def weibull_loglik_discrete(y_true, ab_pred, name=None):
+    y_ = y_true[:, 0]
+    u_ = y_true[:, 1]
+    a_ = ab_pred[:, 0]
+    b_ = ab_pred[:, 1]
+
+    hazard0 = K.pow((y_ + 1e-35) / a_, b_)
+    hazard1 = K.pow((y_ + 1) / a_, b_)
+
+    return -1 * K.mean(u_ * K.log(K.exp(hazard1 - hazard0) - 1.0) - hazard1)
+    
     
 #------------------------------------------------------------------------------
 # Read in Data
@@ -42,25 +65,27 @@ y = pd.DataFrame();
 
 for i in range(1,2):
 
-    sensorFilePath = './data/train\\0{}_M01_DC_train.csv'.format(i)
-    faultsFilePath = './data/train\\train_faults\\0{}_M01_train_fault_data.csv'.format(i)
-    ttfFilePath = './data/train\\train_ttf\\0{}_M01_DC_train.csv'.format(i)
+    sensorFilePath = '0{}_M01_DC_train.csv'.format(i)
+    faultsFilePath = 'train_faults\\0{}_M01_train_fault_data.csv'.format(i)
+    ttfFilePath = 'train_ttf\\0{}_M01_DC_train.csv'.format(i)
     df_tmp, y_tmp = loadAndProcessRawData(sensorFilePath, faultsFilePath, ttfFilePath)
 
     df = df.append(df_tmp)
 
     y = [y,y_tmp]
     y = pd.concat(y)
-    sensorFilePath = './data/train\\0{}_M02_DC_train.csv'.format(i,i)
-    faultsFilePath = './data/train\\train_faults\\0{}_M02_train_fault_data.csv'.format(i,i)
-    ttfFilePath = './data/train\\train_ttf\\0{}_M02_DC_train.csv'.format(i,i)
-    df_tmp, y_tmp = loadAndProcessRawData(sensorFilePath, faultsFilePath, ttfFilePath)
+#    sensorFilePath = './data/train\\0{}_M02_DC_train.csv'.format(i,i)
+#    faultsFilePath = './data/train\\train_faults\\0{}_M02_train_fault_data.csv'.format(i,i)
+#    ttfFilePath = './data/train\\train_ttf\\0{}_M02_DC_train.csv'.format(i,i)
+#    df_tmp, y_tmp = loadAndProcessRawData(sensorFilePath, faultsFilePath, ttfFilePath)
+#
+#    df = df.append(df_tmp)
+#
+#    y = [y,y_tmp]
+#    y = pd.concat(y)
 
-    df = df.append(df_tmp)
-
-    y = [y,y_tmp]
-    y = pd.concat(y)
-
+#%%
+df.head()
 
 #%%
 #------------------------------------------------------------------------------
@@ -91,23 +116,33 @@ X_all = feature.reshape((feature.shape[0], TimeStepSize, 22))
 # Train
 #%%
 model = Sequential()
-model.add(GRU(22, return_sequences=True,  input_shape=(X_train.shape[1], X_train.shape[2])))
-model.add(Dropout(0.3))
-model.add(GRU(22, return_sequences=True))
-model.add(Dropout(0.3))
-model.add(GRU(22))
-model.add(Dense(3, activation='softmax'))
-adam = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
-#model.compile(loss=customLoss, optimizer='adam')
-model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
+model.add(Masking(mask_value=0., input_shape=(X_train.shape[1], X_train.shape[2])))
+model.add(LSTM(22, input_dim=X_train.shape[2]))
+model.add(Dense(2))
+model.add(Activation(activate))
+model.compile(loss=weibull_loglik_discrete, metrics=['acc'],optimizer=RMSprop(lr=.001))
+history = model.fit(X_train, y_train, nb_epoch=40, batch_size=2000, verbose=2, validation_data=(X_valid, y_valid))
+
+#model.add(GRU(22, return_sequences=True,  input_shape=(X_train.shape[1], X_train.shape[2])))
+#model.add(Dropout(0.3))
+#model.add(GRU(22, return_sequences=True))
+#model.add(Dropout(0.3))
+#model.add(GRU(22))
+#model.add(Dense(2, activation=activate))
+#adam = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+##model.compile(loss=customLoss, optimizer='adam')
+##model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
+#model.compile(loss=weibull_loglik_discrete, optimizer=RMSprop(lr=.001))
+#model.fit(X_train,y_train, nb_epoch=250, batch_size=2000, verbose=2, validation_data=(X_valid, y_valid))
 
 # Early stopping
-es = keras.callbacks.EarlyStopping(monitor='val_loss',
-                              min_delta=0,
-                              patience=2,
-                              verbose=0, mode='auto')
-history = model.fit(X_train,y_train, epochs=50, batch_size=256, \
-                    validation_data=(X_valid, y_valid), verbose=2, shuffle=False)
+#es = keras.callbacks.EarlyStopping(monitor='val_loss',
+#                              min_delta=0,
+#                              patience=2,
+#                              verbose=0, mode='auto')
+
+#history = model.fit(X_train,y_train, epochs=50, batch_size=256, \
+#                    validation_data=(X_valid, y_valid), verbose=2, shuffle=False)
 #%%
 #------------------------------------------------------------------------------
 

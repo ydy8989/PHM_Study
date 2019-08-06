@@ -57,17 +57,21 @@ sensor_fault1, ttf_fault1 = cutoff(data, faults, ttf, 'FlowCool Pressure Dropped
 #####
 data = data.fillna(method = 'ffill')
 data.recipe = data.recipe + 200
+
+
 #그래프 그려보면 [1850000:2000000].plot(subplots = True, figsize = (10,15)) recipe가 0임... 이상.
 #%%
 label = ttf_fault1['TTF_FlowCool Pressure Dropped Below Limit']
-print(data.shape, label.shape)
+print(sensor_fault1.shape, label.shape)
 #하루 이내에 고장은 1 아닌건 다 0으로 레이블링 하는 함수.
-w0 = 86400 * 1
+
+w0 = 86400 * 2
 label_tmp = label.copy()
 label_tmp.loc[label<=w0] = 1
 label_tmp.loc[label > w0] = 0
 label = label_tmp
-#생각보다 없는 하루 직전 에러들.... 눈으로 확인하시길
+
+##생각보다 없는 하루 직전 에러들.... 눈으로 확인하시길
 #plt.figure(figsize=(12, 8))
 #plt.scatter(label_tmp.index[label_tmp==1], label_tmp[label_tmp==1], marker = 'o', color='g', linewidth='1', alpha=0.8, label='high risk')
 #plt.scatter(label_tmp.index[label_tmp!=1], label_tmp[label_tmp!=1], marker = 'o', color='r', linewidth='1', alpha=0.8, label='low risk')
@@ -82,7 +86,19 @@ label = label_tmp
     #일단 오른쪽으로 쉬프팅 후 셔플 : 윈도우 섞기임
 sampleRate = 5
 down_data, down_label = data.ix[::sampleRate], label.ix[::sampleRate]
-df, y = series_to_supervised(down_data, down_label, 90,15)
+df, y = series_to_supervised(down_data, down_label, 60,30)
+
+for i in range(3,10):
+    plt.figure(figsize = (20,5))
+    sensor_fault1.ix[9000:139000,i].plot()
+    df.ix[9000:139000,i].plot()
+    plt.show()
+    
+
+df.ix[:,3:22].plot(subplots = True, grid = True, figsize = (10,40))
+y.plot(figsize = (10,3))
+
+
 df.shape
 y.shape
 y.value_counts()
@@ -100,7 +116,7 @@ def tsne_plot(x1, y1, name="graph.png"):
 
     plt.legend(loc='best');
 #    plt.savefig(name);
-    plt.show();
+    plt.show()
     
 tsne_plot(df,y)
 

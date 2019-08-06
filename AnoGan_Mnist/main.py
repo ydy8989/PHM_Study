@@ -116,6 +116,7 @@ plt.imshow(cv2.cvtColor(diff,cv2.COLOR_BGR2RGB))
 plt.show()
 
 
+
 ### 4. tsne feature view
 
 ### t-SNE embedding 
