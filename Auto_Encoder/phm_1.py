@@ -20,10 +20,7 @@ from keras.layers import LSTM, GRU
 import keras.callbacks
 from keras import backend as K
 from keras.models import Model
-from keras.layers import Activation
-from keras.layers import Masking
 
-from keras.optimizers import RMSprop
 from LoadAndProcessCSVFile_Classification import TimeStepSize
 from LoadAndProcessCSVFile_Classification import loadAndProcessRawData
 
@@ -36,47 +33,26 @@ def Error(y_pred, y_real):
 
 def customLoss(y_pred, y_real):
     return K.sum(K.exp(-0.001 * y_real) * K.abs(y_real - y_pred))
-def  activate ( ab ) :
-    a = K.exp (ab [:, 0 ])
-    b = K.softplus (ab [:, 1 ])
-
-    a = K.reshape (a, (K.shape (a) [ 0 ], 1 ))
-    b = K.reshape (b, (K.shape (b) [ 0 ], 1 ))
-
-    return K.concatenate ((a, b), axis = 1 )
-
-def weibull_loglik_discrete(y_true, ab_pred, name=None):
-    y_ = y_true[:, 0]
-    u_ = y_true[:, 1]
-    a_ = ab_pred[:, 0]
-    b_ = ab_pred[:, 1]
-
-    hazard0 = K.pow((y_ + 1e-35) / a_, b_)
-    hazard1 = K.pow((y_ + 1) / a_, b_)
-
-    return -1 * K.mean(u_ * K.log(K.exp(hazard1 - hazard0) - 1.0) - hazard1)
-    
     
 #------------------------------------------------------------------------------
 # Read in Data
 df = pd.DataFrame();
 y = pd.DataFrame();
-
+#root = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train'
 
 for i in range(1,2):
-
-    sensorFilePath = '0{}_M01_DC_train.csv'.format(i)
-    faultsFilePath = 'train_faults\\0{}_M01_train_fault_data.csv'.format(i)
-    ttfFilePath = 'train_ttf\\0{}_M01_DC_train.csv'.format(i)
+    i = 1
+    sensorFilePath = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train\\0{}_M01_DC_train.csv'.format(i)
+    faultsFilePath = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train\\train_faults\\0{}_M01_train_fault_data.csv'.format(i)
+    ttfFilePath = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train\\train_ttf\\0{}_M01_DC_train.csv'.format(i) 
     df_tmp, y_tmp = loadAndProcessRawData(sensorFilePath, faultsFilePath, ttfFilePath)
 
     df = df.append(df_tmp)
-
     y = [y,y_tmp]
     y = pd.concat(y)
-#    sensorFilePath = './data/train\\0{}_M02_DC_train.csv'.format(i,i)
-#    faultsFilePath = './data/train\\train_faults\\0{}_M02_train_fault_data.csv'.format(i,i)
-#    ttfFilePath = './data/train\\train_ttf\\0{}_M02_DC_train.csv'.format(i,i)
+#    sensorFilePath = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train\\0{}_M02_DC_train.csv'.format(i,i)
+#    faultsFilePath = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train\\train_faults\\0{}_M02_train_fault_data.csv'.format(i,i)
+#    ttfFilePath = 'C:\\Users\\hbee\\Desktop\\proj1\\data\\phm_data\\train\\train_ttf\\0{}_M02_DC_train.csv'.format(i,i) 
 #    df_tmp, y_tmp = loadAndProcessRawData(sensorFilePath, faultsFilePath, ttfFilePath)
 #
 #    df = df.append(df_tmp)
@@ -84,65 +60,107 @@ for i in range(1,2):
 #    y = [y,y_tmp]
 #    y = pd.concat(y)
 
+X1 = df.values
+
+y1 = y.values.reshape((y.shape[0],)).astype('int64')
+def tsne_plot(x1, y1, name="graph.png"):
+#    x1 = X.copy()
+#    y1 = Y.copy()
+    
+    tsne = TSNE(n_components=3, random_state=0)
+    X_t = tsne.fit_transform(x1)
+
+    plt.figure(figsize=(12, 8))
+    plt.scatter(X_t[np.where(y1 == 0), 0], X_t[np.where(y1 == 0), 1], marker='o', color='g', linewidth='1', alpha=0.8, label='label0')
+    plt.scatter(X_t[np.where(y1 == 1), 0], X_t[np.where(y1 == 1), 1], marker='o', color='r', linewidth='1', alpha=0.8, label='label1')
+    plt.scatter(X_t[np.where(y1 == 2), 0], X_t[np.where(y1 == 2), 1], marker='o', color='b', linewidth='1', alpha=0.8, label='label2')
+    
+    plt.legend(loc='best');
+#    plt.savefig(name);
+    plt.show();
+tsne_plot(X1, y1, "original.png")
+
+
 #%%
+#------------------------------------------------------------------------------
 # scale data for better performance
 df_scaler = preprocessing.MinMaxScaler(feature_range = (0,1))
 y_scaler = preprocessing.MinMaxScaler(feature_range = (0,1))
 feature = df_scaler.fit_transform(df)
-label = y_scaler.fit_transform(y)
 
+
+
+
+#label = y_scaler.fit_transform(y)
+label = keras.utils.to_categorical(y)
 
 #------------------------------------------------------------------------------
 # split data for train, validate, and test
 x, X_test, y, y_test = train_test_split(feature,label,test_size=0.2,train_size=0.8)
 X_train, X_valid, y_train, y_valid = train_test_split(x,y,test_size = 0.1,train_size =0.9)
-
+label.shape
 #------------------------------------------------------------------------------
-# LSTM
+# Gated Recurrent Unit
 X_train = X_train.reshape((X_train.shape[0], TimeStepSize, 22))
 X_valid = X_valid.reshape((X_valid.shape[0], TimeStepSize, 22))
+X_test = X_test.reshape((X_test.shape[0], TimeStepSize, 22))
 X_all = feature.reshape((feature.shape[0], TimeStepSize, 22))
 
 #------------------------------------------------------------------------------
 # Train
-
+#%%
 model = Sequential()
-model.add(GRU(10, return_sequences=True,  input_shape=(X_train.shape[1], X_train.shape[2])))
+model.add(GRU(22, return_sequences=True,  input_shape=(X_train.shape[1], X_train.shape[2])))
 model.add(Dropout(0.3))
-model.add(GRU(10, return_sequences=True))
+model.add(GRU(22, return_sequences=True))
 model.add(Dropout(0.3))
-model.add(GRU(10))
-model.add(Dense(1))
+model.add(GRU(22))
+model.add(Dense(3, activation='softmax'))
 adam = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
-model.compile(loss=customLoss, optimizer='adam')
+#model.compile(loss=customLoss, optimizer='adam')
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
+
 # Early stopping
 es = keras.callbacks.EarlyStopping(monitor='val_loss',
                               min_delta=0,
                               patience=2,
                               verbose=0, mode='auto')
-history = model.fit(X_train, y_train, epochs=100, batch_size=256, \
+history = model.fit(X_train,y_train, epochs=50, batch_size=256, \
                     validation_data=(X_valid, y_valid), verbose=2, shuffle=False)
-
+#%%
 #------------------------------------------------------------------------------
+
 # Visualize
+model.summary()
+
 plt.plot(history.history['loss'], label='train')
-plt.plot(history.history['val_loss'], label='test')
+plt.plot(history.history['val_loss'], label='validate')
 plt.legend()
 plt.show()
 
-yhat = model.predict(X_all)
-y_pred = y_scaler.inverse_transform(yhat)
-y_real = y_scaler.inverse_transform(label)
-plt.figure()
-#t=np.arange(len(yhat))/len(label)*max(ttf_fault1['time'])/3600
-#scale = 1/len(label)*max(ttf_fault1['TTF_FlowCool Pressure Dropped Below Limit'])/3600;
-plt.plot(y_real[:,0],label="Real Data")
-plt.plot(y_pred[:,0]*500,label="Predicted")
-plt.xlabel("Time (hour)")
-plt.ylabel("Remaining Life (hour)")
-plt.title("Predicted Remaining Life v.s. Real Remaining Life")
-plt.legend();
+df_plot = pd.DataFrame({'epochs':history.epoch, 'accuracy': history.history['acc'], 'validation_accuracy': history.history['val_acc']})
+g = sns.pointplot(x="epochs", y="accuracy", data=df_plot, fit_reg=False)
+g = sns.pointplot(x="epochs", y="validation_accuracy", data=df_plot, fit_reg=False, color='green')
+
+predicted = model.predict(X_test)
+predicted = np.argmax(predicted, axis=1)
+y = np.argmax(y_test, axis=1)
+print( 'matching score is ', accuracy_score(y, predicted))
+
+print(y)
+print(predicted)
+
+
+#loss function print하기...
+
+plt.figure(figsize = (13,7))
+plt.plot(y[:500], label = 'train')
+
+plt.figure(figsize = (13,7))
+plt.plot(predicted[:500])
+plt.legend()
 plt.show()
+
 
 
 #%%
@@ -167,7 +185,7 @@ len(activations)
 activations[4].shape
 activations[5].shape
 
-#output layer feature간의 상관관계를 보여주는 scatter
+#컬럼간의 상관관계를 보여주는 scatter
 df.columns.values[:22]
 df.runnum
 

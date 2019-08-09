@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd 
     
 sampleRate = 10  
-TimeStepSize = 60 # every 600 second
+TimeStepSize = 1 # every 600 second
 n_skipSample = 30 # skip a lot of samples
 #------------------------------------------------------------------------------
 # drop the rows having nan values in ttf_data

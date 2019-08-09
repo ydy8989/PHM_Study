@@ -9,7 +9,7 @@ from sklearn.preprocessing import normalize
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-
+import os
 i1 = 1
 i2 = 1
 a= '0{}_M0{}_DC_train.csv'.format(i1,i2)
@@ -43,7 +43,6 @@ bb1 = bb1['TTF_'+'FlowCool Pressure Dropped Below Limit']
 #summation of sensor_data and TTF_data
 sum_df = pd.concat([aa1, bb1],axis = 1)
 sum_df.rename(columns={'TTF_'+'FlowCool Pressure Dropped Below Limit':"Label"}, inplace = True)
-
 #%%
 #Fixtureshutterposition ONE-HOT-ENCODING
 #def fixtureshutter_outlier(aa):
@@ -58,6 +57,7 @@ def std_based_outlier(df):
         print('{}th-colum processing.......'.format(i))       
     return df
 outlier_aa = std_based_outlier(sum_df)
+
 ## =============================================================================
 ## #plotting
 ## =============================================================================
@@ -141,18 +141,12 @@ print('length of stglst:',len(stglst))
 #cc
 #grp_stg[sen_col]
 obj_col = ['time',  'Lot', 'runnum', 'recipe', 'recipe_step','Label']
+
 #Only sensor columns..(except Label col.)
 sen_col = list(outlier_aa.columns[7:-1]) 
 
 def split_norm_df(outlier_aa):
-    #이상치 제거한다.
-        #분산으로 제거하면 좋음.
-        #pass
-        #this process is inevitable proess...        
-    #쪼갠다
     outlier_aa = outlier_aa.fillna(method='ffill')
-#    aa_copy = aa.copy()
-#    aa_copy[sen_col]=0
     df = pd.DataFrame()
     for num, grp_lot in outlier_aa.groupby('Lot'): 
         for num2, grp_stg in grp_lot.groupby('stage'):
@@ -184,25 +178,26 @@ def split_norm_df(outlier_aa):
     #붙인걸 리턴한다.
     return result
 
-# 저장 파일 있으면, 불러오고 없으면 만들기
-
-norm_save_file = True
-
-if norm_save_file:    
-    print('Save file loading.......')
-    new_aa = pd.read_csv('norm_sensor_data2.csv')
-    new_aa = new_aa.drop(['Unnamed: 0'], axis = 1)
-else:
+# 저장 파일 있으면 True, 불러오고 없으면 False
+# =============================================================================
+# Label.1 drop!!!!
+# =============================================================================
+if 'norm_sensor_data.csv' not in os.listdir():
     print('There is no save file!')
     print('Dataframe normalizeing Start!!.....')
     new_aa = split_norm_df(outlier_aa)
-    new_aa = pd.concat([new_aa,outlier_aa.Label], axis = 1)
-    new_aa.to_csv("norm_sensor_data2.csv", mode='w')
-
+#    new_aa = pd.concat([new_aa,outlier_aa.Label], axis = 1)
+    new_aa.to_csv("norm_sensor_data.csv", mode='w')
+else:
+    print('File loading.......')
+    new_aa = pd.read_csv('norm_sensor_data.csv')
+    new_aa = new_aa.drop(['Unnamed: 0'], axis = 1)
+#    new_aa = pd.concat([new_aa,outlier_aa.Label], axis = 1)
+    
 #
-new_aa.head()
-
-
+#new_aa.head()
+new_aa = new_aa.drop(['Label.1'], axis = 1)
+new_aa.info()
 
 # =============================================================================
 # #플로팅 
@@ -250,10 +245,6 @@ def weibull_loglik_discrete(y_true, ab_pred, name=None):
 
     return -1 * k.mean(u_ * k.log(k.exp(hazard1 - hazard0) - 1.0) - hazard1)
 
-"""
-    Not used for this model, but included in case somebody needs it
-    For math, see https://ragulpr.github.io/assets/draft_master_thesis_martinsson_egil_wtte_rnn_2016.pdf (Page 35)
-"""
 def weibull_loglik_continuous(y_true, ab_pred, name=None):
     y_ = y_true[:, 0]
     u_ = y_true[:, 1]
@@ -264,9 +255,7 @@ def weibull_loglik_continuous(y_true, ab_pred, name=None):
     return -1 * k.mean(u_ * (k.log(b_) + b_ * k.log(ya)) - k.pow(ya, b_))
 
 
-"""
-    Custom Keras activation function, outputs alpha neuron using exponentiation and beta using softplus
-"""
+
 def activate(ab):
     a = k.exp(ab[:, 0])
     b = k.softplus(ab[:, 1])
@@ -275,7 +264,6 @@ def activate(ab):
     b = k.reshape(b, (k.shape(b)[0], 1))
 
     return k.concatenate((a, b), axis=1)
-
 
 """
     Load and parse engine data files into:
@@ -290,14 +278,15 @@ def load_file(name):
         return np.loadtxt(file, delimiter=',')
 #디폴트 세팅
 np.set_printoptions(suppress=True, threshold=10000)
-#%%
-new_aa[new_aa.Lot==589].plot(subplots=True, figsize = (12,34))
-#bb1.plot(figsize = )
 
 #%%
-train = pd.read_csv('C:/Users/hbee/Desktop/proj1/data/predictive_maintenance/train.csv', header = None)
-test_x = pd.read_csv('C:/Users/hbee/Desktop/proj1/data/predictive_maintenance/test_x.csv', header = None)
-test_y = pd.read_csv('C:/Users/hbee/Desktop/proj1/data/predictive_maintenance/test_y.csv', header = None)#여기서 테스트 
+#train = pd.read_csv('C:/Users/hbee/Desktop/proj1/data/predictive_maintenance/train.csv', header = None)
+#test_x = pd.read_csv('C:/Users/hbee/Desktop/proj1/data/predictive_maintenance/test_x.csv', header = None)
+#test_y = pd.read_csv('C:/Users/hbee/Desktop/proj1/data/predictive_maintenance/test_y.csv', header = None)#여기서 테스트 
+new_aa.info()
+
+#%%
+
 
 
 # Combine the X values to normalize them, then split them back out
@@ -344,9 +333,8 @@ new_aaM = new_aa.as_matrix()
 new_aaM.shape
 #%%
 sampleRate = 5 
-TimeStepSize = 1 # every 600 second
-n_skipSample = 3 # skip a lot of samples
-#
+TimeStepSize = 1
+n_skipSample = 3 
 #a= '0{}_M0{}_DC_train.csv'.format(i1,i2)
 #b= 'train_ttf/0{}_M0{}_DC_train.csv'.format(i1,i2)
 #c = 'train_faults/0{}_M0{}_train_fault_data.csv'.format(i1,i2)
@@ -367,11 +355,14 @@ n_skipSample = 3 # skip a lot of samples
 #                    bb, 'FlowCool Pressure Dropped Below Limit')    
 
 #aa1 = aa1.fillna(method = 'ffill')
-new_aa.info()
-aa1['recipe'] = aa1['recipe'] + 200
-label = bb1['TTF_FlowCool Pressure Dropped Below Limit']
+#new_aa.recipe.value_counts()
+#import seaborn as sns
+#sns.distplot(new_aa.recipe, rug=True)
+#plt.show()
+#aa1['recipe'] = aa1['recipe'] + 200
+label = new_aa[['Label','Label.1']]
 #label.plot()
-
+#label
 
 def series_to_supervised(data, y, n_in=100, n_skip = 30, dropnan=True):
 #    data = df_select
@@ -391,7 +382,7 @@ def series_to_supervised(data, y, n_in=100, n_skip = 30, dropnan=True):
         result = result[n_in:]
         label = label[n_in:]
     return result, label
-df_select, y_select = aa1.ix[::sampleRate], label.ix[::sampleRate]
+df_select, y_select = new_aa.ix[::sampleRate][new_aa.columns[:-1]], label.ix[::sampleRate]
 df, y = series_to_supervised(df_select, y_select, TimeStepSize, n_skipSample, True)
 #list(df["Lot"].value_counts().index)
 
@@ -406,18 +397,18 @@ from tqdm import tqdm
 
 def build_data(engine, time, x, max_time, is_test, mask_value):
 #    df2[:, 2], df2[:, 0], df2[:, 4:], max_time, False, mask_value
-#    engine=df2[:, 2]
+#    engine=df2[:, 1]
 #    time=df2[:, 0]
-#    x=df2[:, 4:]
+#    x=df2[:, 5:]
 #    max_time=max_time
 #    is_test=False
 #    mask_value=mask_value
 
     # y[0] will be days remaining, y[1] will be event indicator, always 1 for this data
-#    out_y = []
+    out_y = []
     
     #피쳐 갯수
-    d = x.shape[1]
+    d = x.shape[1]-1
 
     # A full history of sensor readings to date for each x
     out_x = []
@@ -443,148 +434,134 @@ def build_data(engine, time, x, max_time, is_test, mask_value):
             if j%100==0:
                 print("Lot num: " + str(i), '({}/{})'.format(j,max_engine_time))
             engine_x = x[engine == i]
-#            out_y.append(np.array((max_engine_time - j, 1), ndmin=2))
+
             #마스킹하기 -99로
             xtemp = np.zeros((1, max_time, d))
             xtemp += mask_value #앞에 마스크 씌우기
 #            xtemp.shape
 #             xtemp = np.full((1, max_time, d), mask_value)
-            
-            xtemp[:, max_time-min(j, 99)-1:max_time, :] = engine_x[max(0, j-max_time+1):j+1, :]
+            xtemp[:, max_time-min(j, 99)-1:max_time, :] = engine_x[max(0, j-max_time+1):j+1, :][0][1:]
+            out_y.append(np.array((engine_x[max(0, j-max_time+1):j+1, :][0][0], 1), ndmin=2))
             this_x.append(xtemp)
-            
+
         print('========= Lot {} success ========='.format(i))            
         print(j, i)
         this_x = np.concatenate(this_x)
-
         out_x.append(this_x)
                 
     out_x = np.concatenate(out_x)
-    
-#    out_y = np.concatenate(out_y)
-    return out_x#, out_y
-
-lot_list = list(df["Lot"].value_counts().index)
-df2 = df.as_matrix()
-train_x = build_data(df2[:, 2], df2[:, 0], df2[:, 4:], max_time, False, mask_value)
-#train_x.shape
-#df.shape
-#y.shape
-#%%
-
-def build_data(engine, time, x, max_time, is_test):
-    engine = new_aaM[:, 1]
-    time = new_aaM[:, 0]
-    x = new_aaM[:, 2:]
-#    
-    is_test = False
-    # y[0] will be days remaining, y[1] will be event indicator, always 1 for this data
-#    out_y = np.empty((0, 2), dtype=np.float32)
-
-    # A full history of sensor readings to date for each x
-    out_x = []#np.empty((0, max_time, 19), dtype=np.float32)
-
-    for i in lot_list:
-        
-        # When did the engine fail? (Last day + 1 for train data, irrelevant for test.)
-        i = 589
-        max_engine_time = int(np.max(time[engine == i])) + 1
-
-        if is_test:
-            start = max_engine_time - 1
-        else:
-            start = 0
-
-        this_x = []#np.empty((0, max_time, 19), dtype=np.float32)
-
-        for j in range(start, max_engine_time):#start 시간부터 287초 까지(id = 2 일때 마지막 시간 287임)
-            j = 0
-            if j%100==0:
-                print("Lot num: " + str(i), '({}/{})'.format(j,max_engine_time))
-            engine_x = x[engine == i] # 우리껄로 치면 lot=589일때 센서값들 전체
-
-#            out_y = np.append(out_y, np.array((max_engine_time - j, 1), ndmin=2), axis=0)
-            
-            xtemp = np.zeros((1, max_time, 19))
-            xtemp.append(engine_x[max(0, j-max_time+1):j+1, :])
-            
-            xtemp[:, max_time-min(j, 99)-1:max_time, :] = engine_x[max(0, j-max_time+1):j+1, :]
-            this_x.append(xtemp)
-            
-        this_x = np.concatenate(this_x)
-        out_x.append(this_x)
-    
-    out_x = np.concatenate(out_x)
-    out_x.shape
-#    out_y = np.concatenate(out_y)
-#
-#        out_x = np.concatenate((out_x, this_x))
-
-    return out_x#, out_y
-
-train_x = build_data(new_aaM[:, 1], new_aaM[:, 0], new_aaM[:, 2:], max_time, False)
-#train_y = ?????
-
-#%%
-
-def build_data(engine, time, x, max_time, is_test):
-#    engine = train[:, 0]
-#    time = train[:, 1]
-#    x = train[:, 2:26]
-#    is_test = False
-    # y[0] will be days remaining, y[1] will be event indicator, always 1 for this data
-    out_y = np.empty((0, 2), dtype=np.float32)
-
-    # A full history of sensor readings to date for each x
-    out_x = np.empty((0, max_time, 24), dtype=np.float32)
-
-    for i in range(100):
-        print("Engine: " + str(i))
-        # When did the engine fail? (Last day + 1 for train data, irrelevant for test.)
-#        i = 1
-        max_engine_time = int(np.max(time[engine == i])) + 1
-
-        if is_test:
-            start = max_engine_time - 1
-        else:
-            start = 0
-
-        this_x = np.empty((0, max_time, 24), dtype=np.float32)
-
-        for j in range(start, max_engine_time):#start 시간부터 287초 까지(id = 2 일때 마지막 시간 287임)
-#            j = 0
-            engine_x = x[engine == i] # 우리껄로 치면 lot=589일때 센서값들 전체
-
-            out_y = np.append(out_y, np.array((max_engine_time - j, 1), ndmin=2), axis=0)
-
-            xtemp = np.zeros((1, max_time, 24))
-            xtemp[:, max_time-min(j, 99)-1:max_time, :] = engine_x[max(0, j-max_time+1):j+1, :]
-            this_x = np.concatenate((this_x, xtemp))
-
-        out_x = np.concatenate((out_x, this_x))
+    out_y = np.concatenate(out_y)
 
     return out_x, out_y
 
+lot_list = list(df["Lot"].value_counts().index)
+len(lot_list)
+# =============================================================================
+# 랏 에러 포인트 체크
+# =============================================================================
+#for idx, i in enumerate(lot_list):
+#    if i ==4198:
+#        print(idx)
+df2 = df.as_matrix()
+# =============================================================================
+# 인덱스 보고 Label이 5번째 컬럼인지 확인하기.
+# =============================================================================
+df.info() 
+
+train_x, train_y = build_data(df2[:, 1], df2[:, 0], df2[:, 5:], max_time, False, mask_value)
+
+
+print(train_x.shape)
+print(train_y.shape)
+cut_line = int(len(train_x)*0.7)
+train_x1, train_y1 = train_x[:cut_line],train_y[:cut_line] 
+test_x = train_x[cut_line:]
+
+#%%
 
 
 
-
-train_x, train_y = build_data(train[:, 0], train[:, 1], train[:, 2:26], max_time, False)
-train_x.shape
-train_y.shape
-
-
-test_x = build_data(test_x[:, 0], test_x[:, 1], test_x[:, 2:26], max_time, True)[0]
+#test_x = build_data(test_x[:, 0], test_x[:, 1], test_x[:, 2:26], max_time, True)[0]
 
 train_u = np.zeros((100, 1), dtype=np.float32)
 train_u += 1
 test_y = np.append(np.reshape(test_y, (100, 1)), train_u, axis=1)
+#%%
+
+tte_mean_train = np.nanmean(train_y[:,0])
+mean_u = np.nanmean(train_y[:,1])
+
+# Initialization value for alpha-bias 
+init_alpha = -1.0/np.log(1.0-1.0/(tte_mean_train+1.0) )
+init_alpha = init_alpha/mean_u
+print('tte_mean_train', tte_mean_train, 'init_alpha: ',init_alpha,'mean uncensored train: ',mean_u)
 
 """
     Here's the rest of the meat of the demo... actually fitting and training the model.
     We'll also make some test predictions so we can evaluate model performance.
 """
 
+n_features = train_x.shape[-1]
+
+# Start building our model
+model = Sequential()
+
+# Mask parts of the lookback period that are all zeros (i.e., unobserved) so they don't skew the model
+model.add(Masking(mask_value=mask_value, input_shape=(None, n_features)))
+
+# model.add(BatchNormalization())
+from keras.layers import GRU
+
+# LSTM is just a common type of RNN. You could also try anything else (e.g., GRU).
+# model.add(GRU(20, activation='tanh', recurrent_dropout=0.25))
+model.add(GRU(20, activation='tanh', recurrent_dropout=0.25))
+
+# model.add(Dense(20))
+
+# We need 2 neurons to output Alpha and Beta parameters for our Weibull distribution
+# model.add(TimeDistributed(Dense(2)))
+model.add(Dense(2))
+
+# Apply the custom activation function mentioned above
+# model.add(Activation(activate))
+import wtte.weibull as weibull
+import wtte.wtte as wtte
+from keras.layers import Lambda
+from keras.optimizers import RMSprop,adam
+
+model.add(Lambda(wtte.output_lambda, 
+                 arguments={"init_alpha":init_alpha, 
+                            "max_beta_value":100.0, 
+                            "alpha_kernel_scalefactor":0.5
+                           },
+                ))
+
+# Use the discrete log-likelihood for Weibull survival data as our loss function
+loss = wtte.loss(kind='discrete',reduce_loss=False).loss_function
+
+model.compile(loss=loss, optimizer=adam(lr=.01, clipvalue=0.5))
+from keras.callbacks import History
+from wtte.wtte import WeightWatcher
+from keras import callbacks
+
+history = History()
+weightwatcher = WeightWatcher()
+nanterminator = callbacks.TerminateOnNaN()
+
+model.fit(train_x, train_y,
+              epochs=10,
+              batch_size=100, 
+              verbose=1,
+#              validation_data=(test_x, test_y),
+              callbacks=[nanterminator,history,weightwatcher])
+
+
+
+#%%
+
+len(lot_list)
+
+#%%
 # Start building our model
 model = Sequential()
 
@@ -609,6 +586,7 @@ model.fit(train_x, train_y, nb_epoch=50, batch_size=2000, verbose=2, validation_
 
 # Make some predictions and put them alongside the real TTE and event indicator values
 test_predict = model.predict(test_x)
+test_predict.shape
 test_predict = np.resize(test_predict, (100, 2))
 test_result = np.concatenate((test_y, test_predict), axis=1)
 
